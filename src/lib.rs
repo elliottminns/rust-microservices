@@ -1,2 +1,5 @@
-pub mod model;
-pub mod store;
+mod model;
+mod store;
+
+pub use model::Scan;
+pub use store::store::Store;
