@@ -9,7 +9,15 @@ edition = "2021"
 name = "data"
 path = "src/lib.rs"
 
+[[bin]]
+name = "validator"
+path = "src/bin/validator.rs"
+
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 chrono = { version = "0.4", features = ["serde", "rustc-serialize"] }
+actix-web = "4"
+mime = "0.3"
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1", features = ["full"] }
