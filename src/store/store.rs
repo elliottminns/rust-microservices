@@ -21,9 +21,17 @@ impl Store {
         format!("{}:{}", ip, port)
     }
 
-    pub fn insert_record(&mut self, scan: Scan) {
-        let key = Store::key_for_record(&scan);
-        self.map.insert(key, scan);
+    pub fn insert_record(&mut self, scan: Scan) -> Result<(), &'static str> {
+        match self.get_record(&scan.ip, scan.port) {
+            None => {
+                let key = Store::key_for_record(&scan);
+                self.map.insert(key, scan);
+                Ok(())
+            },
+            Some(_) => {
+                Err("record already exists")
+            }
+        }
     }
 
     pub fn get_all(&self) -> Vec<Scan> {
@@ -48,7 +56,8 @@ impl Store {
         match self.get_record(&scan.ip, scan.port) {
             None => Err("no record exists"),
             Some(_) => {
-                self.insert_record(scan);
+                let key = Store::key_for_record(&scan);
+                self.map.insert(key, scan);
                 Ok(())
             }
         }
@@ -81,7 +90,11 @@ mod tests {
             timestamp: Utc::now(),
         };
 
-        store.insert_record(record);
+        let res = store.insert_record(record.clone());
+        assert!(res.is_ok());
+
+        let res = store.insert_record(record.clone());
+        assert!(res.is_err());
 
         assert_eq!(store.map.contains_key("1.2.3.4:80"), true);
 
@@ -102,7 +115,7 @@ mod tests {
             timestamp: now,
         };
 
-        store.insert_record(record);
+        store.insert_record(record)?;
 
         let res = store.get_record("1.2.3.4", 80);
         assert!(res.is_some());
@@ -134,7 +147,7 @@ mod tests {
             timestamp: Utc::now(),
         };
 
-        store.insert_record(record);
+        store.insert_record(record)?;
 
         let res = store.delete_record("1.2.3.4", 80);
 
@@ -159,7 +172,7 @@ mod tests {
             timestamp: Utc::now(),
         };
 
-        store.insert_record(record);
+        store.insert_record(record)?;
 
         let record = Scan{
             ip: "8.8.8.8".to_owned(),
@@ -169,7 +182,7 @@ mod tests {
             timestamp: Utc.ymd(2021, 9, 20).and_hms(17, 10, 0),
         };
 
-        store.insert_record(record);
+        store.insert_record(record)?;
 
         let res = store.get_all();
 
@@ -195,7 +208,7 @@ mod tests {
 
         assert!(res.is_err());
 
-        store.insert_record(record.clone());
+        store.insert_record(record.clone())?;
 
         record.load_time_nanosec = 20;
         record.content_hash = "barfoo".to_owned();
