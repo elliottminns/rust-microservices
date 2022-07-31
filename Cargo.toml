@@ -10,6 +10,10 @@ name = "data"
 path = "src/lib.rs"
 
 [[bin]]
+name = "actix"
+path = "src/bin/actix.rs"
+
+[[bin]]
 name = "validator"
 path = "src/bin/validator.rs"
 
