@@ -1,11 +1,11 @@
 use data::{Store,Scan};
 use actix_web::{get,post,put,delete,App,HttpServer,HttpResponse,web};
 use actix_web::web::Data;
-use std::sync::Mutex;
+use tokio::sync::Mutex;
 
 #[get("")]
 async fn get_all_scans(store: Data<Mutex<Store>>) -> HttpResponse {
-    HttpResponse::Ok().json(store.lock().unwrap().get_all())
+    HttpResponse::Ok().json(store.lock().await.get_all())
 }
 
 #[get("/{ip}/{port}")]
@@ -14,12 +14,12 @@ async fn get_scan(store: Data<Mutex<Store>>, path_param: web::Path<(String, i16)
     let ip = params.0;
     let port = params.1;
 
-    HttpResponse::Ok().json(store.lock().unwrap().get_record(&ip, port))
+    HttpResponse::Ok().json(store.lock().await.get_record(&ip, port))
 }
 
 #[post("")]
 async fn create_scan(store: Data<Mutex<Store>>, item: web::Json<Scan>) -> HttpResponse {
-    match store.lock().unwrap().insert_record(item.0) {
+    match store.lock().await.insert_record(item.0) {
         Err(x) => HttpResponse::BadRequest().body(x),
         Ok(_) => HttpResponse::Created().finish()
     }
@@ -27,7 +27,7 @@ async fn create_scan(store: Data<Mutex<Store>>, item: web::Json<Scan>) -> HttpRe
 
 #[put("")]
 async fn update_scan(store: Data<Mutex<Store>>, item: web::Json<Scan>) -> HttpResponse {
-    match store.lock().unwrap().update_record(item.0) {
+    match store.lock().await.update_record(item.0) {
         Err(x) => HttpResponse::BadRequest().body(x),
         Ok(_) => HttpResponse::Ok().finish()
     }
@@ -39,7 +39,7 @@ async fn delete_scan(store: Data<Mutex<Store>>, path_param: web::Path<(String, i
     let ip = params.0;
     let port = params.1;
 
-    match store.lock().unwrap().delete_record(&ip, port) {
+    match store.lock().await.delete_record(&ip, port) {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(x) => HttpResponse::BadRequest().body(x)
     }
