@@ -14,6 +14,10 @@ name = "actix"
 path = "src/bin/actix.rs"
 
 [[bin]]
+name = "warp"
+path = "src/bin/warp.rs"
+
+[[bin]]
 name = "validator"
 path = "src/bin/validator.rs"
 
@@ -25,3 +29,4 @@ actix-web = "4"
 mime = "0.3"
 reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
+warp = "0.3"
