@@ -18,6 +18,10 @@ name = "warp"
 path = "src/bin/warp.rs"
 
 [[bin]]
+name = "tide"
+path = "src/bin/tide.rs"
+
+[[bin]]
 name = "validator"
 path = "src/bin/validator.rs"
 
@@ -30,3 +34,4 @@ mime = "0.3"
 reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
 warp = "0.3"
+tide = "0.16.0"
