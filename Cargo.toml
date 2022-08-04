@@ -35,3 +35,4 @@ reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
 warp = "0.3"
 tide = "0.16.0"
+rocket = { version = "0.5.0-rc.2", features = ["json"] }
