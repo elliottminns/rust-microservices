@@ -1,13 +1,13 @@
 use data::Store;
 use tide::{Body,Request,Response};
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use std::sync::Arc;
 
-type Db = Arc<Mutex<Store>>;
+type Db = Arc<RwLock<Store>>;
 
 async fn get_all_scans(req: Request<Db>) -> Result<Body, tide::Error> {
     let store = req.state();
-    let res = store.lock().await.get_all();
+    let res = store.read().await.get_all();
 
     Body::from_json(&res)
 }
@@ -17,7 +17,7 @@ async fn get_scan(req: Request<Db>) -> Result<Body, tide::Error> {
     let ip: &str = req.param("ip")?;
     let port: i16 = req.param("port")?.parse()?;
 
-    let res = store.lock().await.get_record(ip, port);
+    let res = store.read().await.get_record(ip, port);
 
     Body::from_json(&res)
 }
@@ -25,7 +25,7 @@ async fn get_scan(req: Request<Db>) -> Result<Body, tide::Error> {
 async fn create_scan(mut req: Request<Db>) -> tide::Result<tide::Response> {
     let scan = req.body_json().await?;
     let store = req.state();
-    match store.lock().await.insert_record(scan) {
+    match store.write().await.insert_record(scan) {
         Err(_) => Ok(Response::builder(tide::StatusCode::BadRequest).build()),
         Ok(_) => Ok(Response::builder(tide::StatusCode::Created).build()),
     }
@@ -34,7 +34,7 @@ async fn create_scan(mut req: Request<Db>) -> tide::Result<tide::Response> {
 async fn update_scan(mut req: Request<Db>) -> tide::Result<tide::Response> {
     let scan = req.body_json().await?;
     let store = req.state();
-    match store.lock().await.update_record(scan) {
+    match store.write().await.update_record(scan) {
         Err(_) => Ok(Response::builder(tide::StatusCode::BadRequest).build()),
         Ok(_) => Ok(Response::builder(tide::StatusCode::Ok).build()),
     }
@@ -45,7 +45,7 @@ async fn delete_scan(req: Request<Db>) -> tide::Result<tide::Response> {
     let ip: &str = req.param("ip")?;
     let port: i16 = req.param("port")?.parse()?;
 
-    match store.lock().await.delete_record(ip, port) {
+    match store.write().await.delete_record(ip, port) {
         Err(_) => Ok(Response::builder(tide::StatusCode::BadRequest).build()),
         Ok(_) => Ok(Response::builder(tide::StatusCode::Ok).build()),
     }
@@ -53,7 +53,7 @@ async fn delete_scan(req: Request<Db>) -> tide::Result<tide::Response> {
 
 #[tokio::main]
 async fn main() -> tide::Result<()> {
-    let store: Db = Arc::new(Mutex::new(Store::new()));
+    let store: Db = Arc::new(RwLock::new(Store::new()));
 
     let mut app = tide::new();
 

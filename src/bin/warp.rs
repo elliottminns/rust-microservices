@@ -1,8 +1,8 @@
 use data::Store;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 
-pub type Db = Arc<Mutex<Store>>;
+pub type Db = Arc<RwLock<Store>>;
 
 mod filters {
     use super::{handlers,Db};
@@ -86,21 +86,21 @@ mod handlers {
     use warp::http::StatusCode;
 
     pub async fn get_all_scans(store: Db) -> Result<impl warp::Reply, Infallible> {
-        let res = store.lock().await.get_all();
+        let res = store.read().await.get_all();
         Ok(warp::reply::json(&res))
     }
 
     pub async fn get_scan(
         ip: String, port: i16, store: Db,
     ) -> Result<impl warp::Reply, Infallible> {
-        let res = store.lock().await.get_record(&ip, port);
+        let res = store.read().await.get_record(&ip, port);
         Ok(warp::reply::json(&res))
     }
 
     pub async fn create_scan(
         scan: Scan, store: Db,
     ) -> Result<impl warp::Reply, Infallible> {
-        match store.lock().await.insert_record(scan) {
+        match store.write().await.insert_record(scan) {
             Err(_) => Ok(StatusCode::BAD_REQUEST),
             Ok(_) => Ok(StatusCode::CREATED),
         }
@@ -109,7 +109,7 @@ mod handlers {
     pub async fn update_scan(
         scan: Scan, store: Db,
     ) -> Result<impl warp::Reply, Infallible> {
-        match store.lock().await.update_record(scan) {
+        match store.write().await.update_record(scan) {
             Err(_) => Ok(StatusCode::BAD_REQUEST),
             Ok(_) => Ok(StatusCode::OK),
         }
@@ -118,7 +118,7 @@ mod handlers {
     pub async fn delete_scan(
         ip: String, port: i16, store: Db,
     ) -> Result<impl warp::Reply, Infallible> {
-        match store.lock().await.delete_record(&ip, port) {
+        match store.write().await.delete_record(&ip, port) {
             Err(_) => Ok(StatusCode::BAD_REQUEST),
             Ok(_) => Ok(StatusCode::OK),
         }
@@ -128,7 +128,7 @@ mod handlers {
 
 #[tokio::main]
 async fn main() {
-    let store = Arc::new(Mutex::new(Store::new()));
+    let store = Arc::new(RwLock::new(Store::new()));
     let api = filters::scans(store);
 
     warp::serve(api).run(([127, 0, 0, 1], 8080)).await;
